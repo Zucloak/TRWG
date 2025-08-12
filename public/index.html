@@ -230,6 +230,7 @@
                 await ffmpeg.load({
                     coreURL: '/ffmpeg/ffmpeg-core.js',
                     wasmURL: '/ffmpeg/ffmpeg-core.wasm',
+                    workerURL: '/ffmpeg/ffmpeg-core.worker.js',
                 });
             } catch (err) {
                  updateStatus('Failed to load FFmpeg. See console.', true, 'error');
