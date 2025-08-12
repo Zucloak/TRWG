@@ -156,7 +156,7 @@
         </main>
     </div>
 
-    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/umd/ffmpeg.js" crossorigin="anonymous"></script>
+    <script src="/ffmpeg/ffmpeg.js"></script>
     <script>
         const { FFmpeg } = FFmpegWASM;
         let ffmpeg;
@@ -225,14 +225,11 @@
 
         async function loadFFmpeg() {
             ffmpeg = new FFmpeg();
-            const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
             updateStatus('Loading FFmpeg...', true, 'loader');
             try {
-                 // All URLs must be absolute paths from the CDN
                 await ffmpeg.load({
-                    coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-                    wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-                    workerURL: await toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript'),
+                    coreURL: '/ffmpeg/ffmpeg-core.js',
+                    wasmURL: '/ffmpeg/ffmpeg-core.wasm',
                 });
             } catch (err) {
                  updateStatus('Failed to load FFmpeg. See console.', true, 'error');
@@ -326,13 +323,14 @@
             if ((event.type === 'click' && !enableClickZoomCheckbox.checked) || (event.type === 'keydown' && !enableTypeZoomCheckbox.checked)) return;
             if (event.type === 'keydown' && (event.metaKey || event.ctrlKey || event.altKey)) return;
 
-            const scaleFactor = videoSettings.width / window.innerWidth;
-            const x = event.clientX * scaleFactor;
-            const y = event.clientY * scaleFactor;
+            // Scale screen coordinates by device pixel ratio to get physical pixels
+            const x = event.screenX * window.devicePixelRatio;
+            const y = event.screenY * window.devicePixelRatio;
 
             zoomEvents.push({
                 timestamp: (performance.now() - recordingStartTime) / 1000,
-                x, y,
+                x,
+                y,
                 duration: parseFloat(zoomDurationInput.value),
                 scale: parseFloat(zoomScaleInput.value)
             });
@@ -375,7 +373,7 @@
                         }
 
                         const end = start + event.duration;
-                        const zoompan = `zoompan=z=${event.scale}:x=${event.x}:y=${event.y}:d=${Math.ceil(event.duration * frameRate)}:s=${width}x${height}`;
+                        const zoompan = `zoompan=z='min(pzoom+0.01,${event.scale})':x='${event.x}-(iw/zoom/2)':y='${event.y}-(ih/zoom/2)':d=${Math.ceil(event.duration * frameRate)}:s=${width}x${height}`;
                         filterComplex.push(`[0:v]trim=start=${start}:end=${end},setpts=PTS-STARTPTS,${zoompan},setpts=PTS-STARTPTS[v${streamCount}b]`);
                         concatStreams += `[v${streamCount}b]`;
 
@@ -449,12 +447,6 @@
 
         function updateZoomScaleValue() {
             zoomScaleValue.textContent = `${parseFloat(zoomScaleInput.value).toFixed(1)}x`;
-        }
-
-        async function toBlobURL(url, mimeType) {
-            const response = await fetch(url);
-            const data = await response.blob();
-            return URL.createObjectURL(data);
         }
 
         init();
