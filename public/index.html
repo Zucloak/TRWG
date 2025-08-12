@@ -1,20 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script>
-        window.addEventListener('error', event => {
-            if (event.target && event.target.src && event.target.src.includes('feedback.js')) {
-                console.error("The 'feedback.js' script is being blocked by the page's security policy (COEP). This script is not part of the application and is likely being injected by a browser extension. Please try disabling browser extensions and reload the page.");
-                const statusText = document.getElementById('statusText');
-                const statusIcon = document.getElementById('statusIcon');
-                if (statusText) {
-                    statusIcon.className = '';
-                    statusIcon.innerHTML = '❌';
-                    statusText.textContent = 'Error: A browser extension is interfering with the application. Please disable extensions and refresh.';
-                }
-            }
-        }, true);
-    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Screen Recorder | Refactored</title>
@@ -239,7 +225,14 @@
 
         async function loadFFmpeg() {
             ffmpeg = new FFmpeg();
-            updateStatus('Loading FFmpeg...', true, 'loader');
+            ffmpeg.on('progress', ({ progress }) => {
+                const percentage = Math.round(progress * 100);
+                // Avoids showing 100% right before the "Ready" message.
+                if (percentage < 100) {
+                    updateStatus(`Loading FFmpeg... ${percentage}%`, true, 'loader');
+                }
+            });
+            updateStatus('Loading FFmpeg... 0%', true, 'loader');
             try {
                 await ffmpeg.load({
                     coreURL: '/ffmpeg/ffmpeg-core.js',
