@@ -159,7 +159,7 @@
     <script src="/ffmpeg/ffmpeg.js"></script>
     <script>
         const { FFmpeg } = FFmpegWASM;
-        let ffmpeg;
+        let ffmpeg = null;
 
         // --- DOM Elements ---
         const startRecordingBtn = document.getElementById('startRecording');
@@ -220,32 +220,32 @@
             setupEventListeners();
             updateZoomScaleValue();
             handleBgTypeChange();
-            await loadFFmpeg();
+            updateStatus('Ready to record!', true, 'ready');
+            startRecordingBtn.disabled = false;
         }
 
         async function loadFFmpeg() {
-            ffmpeg = new FFmpeg();
-            ffmpeg.on('progress', ({ progress }) => {
+            if (ffmpeg) return;
+            const ffmpegInstance = new FFmpeg();
+            ffmpegInstance.on('progress', ({ progress }) => {
                 const percentage = Math.round(progress * 100);
-                // Avoids showing 100% right before the "Ready" message.
                 if (percentage < 100) {
                     updateStatus(`Loading FFmpeg... ${percentage}%`, true, 'loader');
                 }
             });
             updateStatus('Loading FFmpeg... 0%', true, 'loader');
             try {
-                await ffmpeg.load({
+                await ffmpegInstance.load({
                     coreURL: '/ffmpeg/ffmpeg-core.js',
                     wasmURL: '/ffmpeg/ffmpeg-core.wasm',
                     workerURL: '/ffmpeg/ffmpeg-core.worker.js',
                 });
+                ffmpeg = ffmpegInstance;
             } catch (err) {
                  updateStatus('Failed to load FFmpeg. See console.', true, 'error');
                  console.error(err);
-                 return;
+                 throw err;
             }
-            updateStatus('Ready to record!', true, 'ready');
-            startRecordingBtn.disabled = false;
         }
 
         function setupEventListeners() {
@@ -294,10 +294,17 @@
                 document.addEventListener('click', zoomEventHandler);
                 document.addEventListener('keydown', zoomEventHandler);
 
-                mediaRecorder.onstop = () => {
+                mediaRecorder.onstop = async () => {
                      document.removeEventListener('click', zoomEventHandler);
                      document.removeEventListener('keydown', zoomEventHandler);
-                     processVideoWithFFmpeg();
+                     try {
+                        await loadFFmpeg();
+                        updateStatus('Processing video, please wait...', true, 'loader');
+                        await processVideoWithFFmpeg();
+                     } catch (err) {
+                        updateStatus('Failed to load FFmpeg or process video.', true, 'error');
+                        console.error(err);
+                     }
                 };
 
                 mediaRecorder.start();
@@ -322,7 +329,6 @@
                 isRecording = false;
                 stream.getTracks().forEach(track => track.stop());
                 stopRecordingBtn.disabled = true;
-                updateStatus('Processing video, this may take a moment...', true, 'loader');
             }
         }
 
