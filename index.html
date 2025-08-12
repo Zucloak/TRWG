@@ -3,82 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Screen Recorder | Minimalist Design</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Screen Recorder | Refactored</title>
+    <link rel="icon" href="favicon.ico">
     <style>
-        .loader {
-            border-top-color: #3498db;
-            animation: spin 1s ease-in-out infinite;
+        :root {
+            --bg-color: #f9fafb;
+            --card-bg: #ffffff;
+            --text-color: #374151;
+            --text-light: #6b7280;
+            --border-color: #d1d5db;
+            --blue: #2563eb;
+            --blue-dark: #1d4ed8;
+            --red: #dc2626;
+            --red-dark: #b91c1c;
+            --green: #16a34a;
+            --green-dark: #15803d;
         }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 2rem 1rem;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 2rem; }
+        h1 { font-size: 2rem; font-weight: 300; margin: 0 0 0.5rem 0; }
+        h2 { font-size: 1.25rem; font-weight: 500; margin-bottom: 1rem; }
+        h3 { font-size: 0.9rem; font-weight: 500; margin-bottom: 0.75rem; color: var(--text-light); }
+        main { background-color: var(--card-bg); border-radius: 0.75rem; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06); padding: 1.5rem; }
+        .controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin-bottom: 1.5rem; }
+        button { padding: 0.75rem 1.5rem; border-radius: 0.5rem; border: none; color: white; font-size: 1rem; cursor: pointer; transition: background-color 0.2s; display: flex; align-items: center; gap: 0.5rem; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #startRecording { background-color: var(--blue); }
+        #startRecording:not(:disabled):hover { background-color: var(--blue-dark); }
+        #stopRecording { background-color: var(--red); }
+        #stopRecording:not(:disabled):hover { background-color: var(--red-dark); }
+        #downloadBtn { background-color: var(--green); }
+        #downloadBtn:not(:disabled):hover { background-color: var(--green-dark); }
+        #statusIndicator { display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; color: var(--text-light); }
+        #statusIcon { width: 1.5rem; height: 1.5rem; margin-right: 0.75rem; display: flex; align-items: center; justify-content: center; }
+        .loader { border: 4px solid #e5e7eb; border-top-color: var(--blue); border-radius: 50%; animation: spin 1s ease-in-out infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .recording-pulse { animation: pulse 1.5s infinite; }
+        .recording-pulse { width: 1rem !important; height: 1rem !important; background-color: var(--red); border-radius: 50%; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .icon-symbol { font-size: 1.5rem; }
+        .preview-container { background-color: #f3f4f6; aspect-ratio: 16 / 9; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 1.5rem; }
+        #preview { width: 100%; height: 100%; object-fit: contain; background-color: black; border-radius: 0.5rem; }
+        #noPreview { position: absolute; text-align: center; color: var(--text-light); }
+        #noPreview p { margin: 0.5rem 0 0 0; }
+        .hidden { display: none !important; }
+        .settings-container { background-color: #f9fafb; padding: 1rem; border-radius: 0.5rem; }
+        .settings-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+        @media (min-width: 768px) { .settings-grid { grid-template-columns: 1fr 1fr; } }
+        .setting-group { display: flex; flex-direction: column; gap: 0.75rem; }
+        .setting-item { display: flex; align-items: center; justify-content: space-between; font-size: 0.9rem; }
+        .setting-item input[type="number"] { width: 4rem; padding: 0.25rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.25rem; }
+        .setting-item input[type="range"] { width: 8rem; }
+        .setting-item-row { display: flex; align-items: center; }
+        .setting-item-row input[type="checkbox"] { margin-right: 0.5rem; }
+        label { color: var(--text-color); }
+        input[type="color"] { border: 1px solid var(--border-color); padding: 0; height: 2rem; width: 4rem; border-radius: 0.25rem; background: none; cursor: pointer; }
+        select { padding: 0.25rem 0.5rem; border: 1px solid var(--border-color); border-radius: 0.25rem; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans">
-    <div class="container mx-auto px-4 py-8">
-        <header class="mb-8 text-center">
-            <h1 class="text-3xl font-light text-gray-800 mb-2">Screen Recorder</h1>
-            <p class="text-gray-600">Minimalist design with intuitive controls</p>
+<body>
+    <div class="container">
+        <header>
+            <h1>Screen Recorder</h1>
+            <p>Minimalist design with intuitive controls</p>
         </header>
 
-        <main class="max-w-4xl mx-auto">
-            <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-                <div class="flex flex-wrap justify-center gap-4 mb-6">
-                    <button id="startRecording" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-colors" disabled>
-                        <i class="fas fa-circle"></i> Start Recording
-                    </button>
-                    <button id="stopRecording" disabled class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-colors opacity-50">
-                        <i class="fas fa-stop"></i> Stop Recording
-                    </button>
-                    <button id="downloadBtn" disabled class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-colors opacity-50">
-                        <i class="fas fa-download"></i> Export Video
-                    </button>
-                </div>
+        <main>
+            <div class="controls">
+                <button id="startRecording" disabled>▶ Start Recording</button>
+                <button id="stopRecording" disabled>■ Stop Recording</button>
+                <button id="downloadBtn" disabled>⇩ Export Video</button>
+            </div>
 
-                <div id="statusIndicator" class="flex items-center justify-center mb-6 text-gray-500">
-                     <div id="statusIcon" class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-6 w-6 mr-3"></div>
-                    <span id="statusText" class="font-medium">Loading FFmpeg...</span>
-                </div>
+            <div id="statusIndicator">
+                <div id="statusIcon" class="loader"></div>
+                <span id="statusText">Loading FFmpeg...</span>
+            </div>
 
-                <div class="mb-6">
-                    <h2 class="text-lg font-medium text-gray-700 mb-3">Preview</h2>
-                    <div class="bg-gray-100 rounded-lg overflow-hidden aspect-video flex items-center justify-center relative">
-                        <video id="preview" class="w-full h-full object-contain bg-black hidden" controls></video>
-                        <div id="noPreview" class="absolute inset-0 flex items-center justify-center text-gray-500">
-                            <div class="text-center">
-                                <i class="fas fa-video text-4xl mb-2"></i>
-                                <p>Recording preview will appear here</p>
-                            </div>
+            <div class="preview-container">
+                <video id="preview" class="hidden" controls></video>
+                <div id="noPreview">
+                    <span class="icon-symbol">🎬</span>
+                    <p>Recording preview will appear here</p>
+                </div>
+            </div>
+
+            <div class="settings-container">
+                <h2>Settings</h2>
+                <div class="settings-grid">
+                    <div class="setting-group">
+                        <h3>Zoom</h3>
+                        <div class="setting-item">
+                            <label for="zoomDuration">Duration (s)</label>
+                            <input type="number" id="zoomDuration" value="2" min="1" max="10">
+                        </div>
+                        <div class="setting-item">
+                            <label for="zoomScale">Scale</label>
+                            <input type="range" id="zoomScale" min="1.1" max="4" step="0.1" value="2">
+                            <span id="zoomScaleValue">2.0x</span>
+                        </div>
+                        <div class="setting-item-row">
+                            <input type="checkbox" id="enableClickZoom" checked>
+                            <label for="enableClickZoom">Zoom on click</label>
+                        </div>
+                        <div class="setting-item-row">
+                            <input type="checkbox" id="enableTypeZoom" checked>
+                            <label for="enableTypeZoom">Zoom on typing</label>
                         </div>
                     </div>
-                </div>
-
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <h2 class="text-lg font-medium text-gray-700 mb-3">Settings</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-600 mb-2">Zoom Settings</h3>
-                            <div class="space-y-3">
-                                <div class="flex items-center justify-between">
-                                    <label for="zoomDuration" class="text-sm">Zoom Duration (seconds)</label>
-                                    <input type="number" id="zoomDuration" value="2" min="1" max="10" class="border rounded px-2 py-1 w-16 text-sm">
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <label for="zoomScale" class="text-sm">Zoom Scale</label>
-                                    <input type="range" id="zoomScale" min="1.1" max="4" step="0.1" value="2" class="w-24">
-                                    <span id="zoomScaleValue" class="text-sm w-8">2.0x</span>
-                                </div>
-                                <div class="flex items-center">
-                                    <input type="checkbox" id="enableClickZoom" checked class="mr-2">
-                                    <label for="enableClickZoom">Zoom on click</label>
-                                </div>
-                                <div class="flex items-center">
-                                    <input type="checkbox" id="enableTypeZoom" checked class="mr-2">
-                                    <label for="enableTypeZoom">Zoom on typing</label>
-                                </div>
-                            </div>
+                    <div class="setting-group">
+                        <h3>Background</h3>
+                         <div class="setting-item">
+                             <label for="bgType">Type</label>
+                             <select id="bgType">
+                                 <option value="none" selected>None</option>
+                                 <option value="solid">Solid Color</option>
+                                 <option value="gradient">Gradient</option>
+                             </select>
+                         </div>
+                        <div id="solidBgSettings" class="hidden">
+                             <div class="setting-item">
+                                 <label for="bgColor">Color</label>
+                                 <input type="color" id="bgColor" value="#FFFFFF">
+                             </div>
+                        </div>
+                        <div id="gradientBgSettings" class="hidden">
+                             <div class="setting-item">
+                                 <label for="gradientStart">Start</label>
+                                 <input type="color" id="gradientStart" value="#FFFFFF">
+                             </div>
+                             <div class="setting-item">
+                                 <label for="gradientEnd">End</label>
+                                 <input type="color" id="gradientEnd" value="#000000">
+                             </div>
+                             <div class="setting-item">
+                                 <label for="gradientDirection">Direction</label>
+                                 <select id="gradientDirection">
+                                     <option value="horizontal">Horizontal</option>
+                                     <option value="vertical">Vertical</option>
+                                 </select>
+                             </div>
                         </div>
                     </div>
                 </div>
@@ -86,7 +156,7 @@
         </main>
     </div>
 
-    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/umd/ffmpeg.js"></script>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/umd/ffmpeg.js" crossorigin="anonymous"></script>
     <script>
         const { FFmpeg } = FFmpegWASM;
         let ffmpeg;
@@ -100,12 +170,18 @@
         const statusIndicator = document.getElementById('statusIndicator');
         const statusIcon = document.getElementById('statusIcon');
         const statusText = document.getElementById('statusText');
-        
         const zoomDurationInput = document.getElementById('zoomDuration');
         const zoomScaleInput = document.getElementById('zoomScale');
         const zoomScaleValue = document.getElementById('zoomScaleValue');
         const enableClickZoomCheckbox = document.getElementById('enableClickZoom');
         const enableTypeZoomCheckbox = document.getElementById('enableTypeZoom');
+        const bgTypeSelect = document.getElementById('bgType');
+        const solidBgSettings = document.getElementById('solidBgSettings');
+        const gradientBgSettings = document.getElementById('gradientBgSettings');
+        const bgColorInput = document.getElementById('bgColor');
+        const gradientStartInput = document.getElementById('gradientStart');
+        const gradientEndInput = document.getElementById('gradientEnd');
+        const gradientDirectionSelect = document.getElementById('gradientDirection');
 
         // --- State Variables ---
         let mediaRecorder;
@@ -114,6 +190,7 @@
         let zoomEvents = [];
         let recordingStartTime;
         let stream;
+        let videoSettings = {};
         let processedVideoBlob = null;
         
         // --- Status Update Function ---
@@ -121,13 +198,16 @@
             statusText.textContent = text;
             statusIndicator.classList.remove('hidden');
             if (showIcon) {
-                statusIcon.className = ''; // Clear classes
+                statusIcon.className = '';
+                statusIcon.innerHTML = '';
                 if (iconType === 'loader') {
-                    statusIcon.classList.add('loader', 'ease-linear', 'rounded-full', 'border-4', 'border-t-4', 'border-gray-200', 'h-6', 'w-6', 'mr-3');
+                    statusIcon.classList.add('loader');
                 } else if (iconType === 'pulse') {
-                    statusIcon.classList.add('recording-pulse', 'bg-red-600', 'w-3', 'h-3', 'rounded-full', 'mr-2');
-                } else {
-                     statusIcon.classList.add('fas', iconType, 'text-xl', 'mr-3');
+                    statusIcon.classList.add('recording-pulse');
+                } else if (iconType === 'ready') {
+                    statusIcon.innerHTML = '✅';
+                } else if (iconType === 'error') {
+                    statusIcon.innerHTML = '❌';
                 }
                 statusIcon.classList.remove('hidden');
             } else {
@@ -135,87 +215,31 @@
             }
         }
 
-        // --- FFmpeg Caching Logic using IndexedDB ---
-        const ffmpegCache = {
-            DB_NAME: 'ffmpeg_cache_db',
-            STORE_NAME: 'ffmpeg_core_store',
-            db: null,
-            initDB: function() {
-                return new Promise((resolve, reject) => {
-                    const request = indexedDB.open(this.DB_NAME, 1);
-                    request.onupgradeneeded = (event) => {
-                        const db = event.target.result;
-                        db.createObjectStore(this.STORE_NAME);
-                    };
-                    request.onsuccess = (event) => {
-                        this.db = event.target.result;
-                        resolve();
-                    };
-                    request.onerror = (event) => {
-                        console.error('IndexedDB error:', event.target.errorCode);
-                        reject(event.target.error);
-                    };
-                });
-            },
-            getCore: function() {
-                return new Promise(async (resolve, reject) => {
-                    if (!this.db) await this.initDB();
-                    const transaction = this.db.transaction([this.STORE_NAME], 'readonly');
-                    const store = transaction.objectStore(this.STORE_NAME);
-                    const request = store.get('ffmpeg-core');
-                    request.onsuccess = (event) => resolve(event.target.result);
-                    request.onerror = (event) => reject(event.target.error);
-                });
-            },
-            setCore: function(data) {
-                return new Promise(async (resolve, reject) => {
-                    if (!this.db) await this.initDB();
-                    const transaction = this.db.transaction([this.STORE_NAME], 'readwrite');
-                    const store = transaction.objectStore(this.STORE_NAME);
-                    const request = store.put(data, 'ffmpeg-core');
-                    request.onsuccess = () => resolve();
-                    request.onerror = (event) => reject(event.target.error);
-                });
-            }
-        };
-
         // --- Main Application Logic ---
         async function init() {
             setupEventListeners();
             updateZoomScaleValue();
-            await loadFFmpegWithCache();
+            handleBgTypeChange();
+            await loadFFmpeg();
         }
         
-        async function loadFFmpegWithCache() {
+        async function loadFFmpeg() {
             ffmpeg = new FFmpeg();
-            const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd"
-
+            const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
+            updateStatus('Loading FFmpeg...', true, 'loader');
             try {
-                updateStatus('Checking cache for FFmpeg...');
-                const coreFromCache = await ffmpegCache.getCore();
-                if (coreFromCache) {
-                    updateStatus('Loading FFmpeg from cache...');
-                    await ffmpeg.load({
-                        coreURL: URL.createObjectURL(new Blob([coreFromCache], { type: "application/javascript" })),
-                        wasmURL: URL.createObjectURL(new Blob([await (await fetch(`${baseURL}/ffmpeg-core.wasm`)).arrayBuffer()], { type: "application/wasm" })),
-                    });
-                } else {
-                     updateStatus('Fetching and caching FFmpeg...');
-                    const coreResponse = await fetch(`${baseURL}/ffmpeg-core.js`);
-                    const coreData = await coreResponse.arrayBuffer();
-                    await ffmpegCache.setCore(coreData);
-                    await ffmpeg.load({
-                         coreURL: URL.createObjectURL(new Blob([coreData], { type: "application/javascript" })),
-                         wasmURL: URL.createObjectURL(new Blob([await (await fetch(`${baseURL}/ffmpeg-core.wasm`)).arrayBuffer()], { type: "application/wasm" })),
-                    });
-                }
+                 // All URLs must be absolute paths from the CDN
+                await ffmpeg.load({
+                    coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+                    wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+                    workerURL: await toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript'),
+                });
             } catch (err) {
-                 updateStatus('Failed to load FFmpeg. See console.', true, 'fa-times-circle');
+                 updateStatus('Failed to load FFmpeg. See console.', true, 'error');
                  console.error(err);
                  return;
             }
-
-            updateStatus('Ready to record!', true, 'fa-check-circle');
+            updateStatus('Ready to record!', true, 'ready');
             startRecordingBtn.disabled = false;
         }
 
@@ -224,6 +248,23 @@
             stopRecordingBtn.addEventListener('click', stopRecording);
             downloadBtn.addEventListener('click', downloadRecording);
             zoomScaleInput.addEventListener('input', updateZoomScaleValue);
+            bgTypeSelect.addEventListener('change', handleBgTypeChange);
+        }
+
+        function handleBgTypeChange() {
+            const type = bgTypeSelect.value;
+            solidBgSettings.classList.toggle('hidden', type !== 'solid' && type !== 'gradient');
+            gradientBgSettings.classList.toggle('hidden', type !== 'gradient');
+            if (type === 'solid') {
+                 gradientBgSettings.classList.add('hidden');
+                 solidBgSettings.classList.remove('hidden');
+            } else if (type === 'gradient') {
+                 solidBgSettings.classList.add('hidden');
+                 gradientBgSettings.classList.remove('hidden');
+            } else {
+                 solidBgSettings.classList.add('hidden');
+                 gradientBgSettings.classList.add('hidden');
+            }
         }
 
         async function startRecording() {
@@ -233,9 +274,8 @@
                     audio: false
                 });
 
-                const trackSettings = stream.getVideoTracks()[0].getSettings();
-                const screenWidth = trackSettings.width;
-                const screenHeight = trackSettings.height;
+                const track = stream.getVideoTracks()[0];
+                videoSettings = track.getSettings();
 
                 mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
                 recordedChunks = [];
@@ -244,16 +284,16 @@
                 recordingStartTime = performance.now();
                 
                 mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
-                mediaRecorder.onstop = () => processVideoWithFFmpeg(screenWidth, screenHeight);
                 
                 const zoomEventHandler = (e) => recordZoomEvent(e);
                 document.addEventListener('click', zoomEventHandler);
                 document.addEventListener('keydown', zoomEventHandler);
+
                 mediaRecorder.onstop = () => {
                      document.removeEventListener('click', zoomEventHandler);
                      document.removeEventListener('keydown', zoomEventHandler);
-                     processVideoWithFFmpeg(screenWidth, screenHeight);
-                }
+                     processVideoWithFFmpeg();
+                };
 
                 mediaRecorder.start();
                 isRecording = true;
@@ -261,15 +301,13 @@
                 startRecordingBtn.disabled = true;
                 stopRecordingBtn.disabled = false;
                 downloadBtn.disabled = true;
-                stopRecordingBtn.classList.remove('opacity-50');
-                downloadBtn.classList.add('opacity-50');
                 previewVideo.classList.add('hidden');
                 noPreview.classList.remove('hidden');
                 updateStatus('Recording...', true, 'pulse');
                 
             } catch (err) {
                 console.error('Error starting recording:', err);
-                updateStatus('Permission denied. Please refresh and allow screen sharing.', true, 'fa-exclamation-triangle');
+                updateStatus('Permission denied. Please refresh and allow screen sharing.', true, 'error');
             }
         }
 
@@ -279,7 +317,6 @@
                 isRecording = false;
                 stream.getTracks().forEach(track => track.stop());
                 stopRecordingBtn.disabled = true;
-                stopRecordingBtn.classList.add('opacity-50');
                 updateStatus('Processing video, this may take a moment...', true, 'loader');
             }
         }
@@ -289,20 +326,27 @@
             if ((event.type === 'click' && !enableClickZoomCheckbox.checked) || (event.type === 'keydown' && !enableTypeZoomCheckbox.checked)) return;
             if (event.type === 'keydown' && (event.metaKey || event.ctrlKey || event.altKey)) return;
 
+            const scaleFactor = videoSettings.width / window.innerWidth;
+            const x = event.clientX * scaleFactor;
+            const y = event.clientY * scaleFactor;
+
             zoomEvents.push({
                 timestamp: (performance.now() - recordingStartTime) / 1000,
-                x: event.screenX, y: event.screenY,
+                x, y,
                 duration: parseFloat(zoomDurationInput.value),
                 scale: parseFloat(zoomScaleInput.value)
             });
         }
         
-        async function processVideoWithFFmpeg(screenWidth, screenHeight) {
-            if (zoomEvents.length === 0) {
-                console.log("No zoom events. Finalizing video without FFmpeg.");
+        async function processVideoWithFFmpeg() {
+            const needsZoom = zoomEvents.length > 0;
+            const needsBg = bgTypeSelect.value !== 'none';
+
+            if (!needsZoom && !needsBg) {
+                console.log("No processing needed. Using original recording.");
                 const blob = new Blob(recordedChunks, { type: 'video/webm' });
                 displayProcessedVideo(blob);
-                updateStatus('Video ready!', true, 'fa-check-circle');
+                updateStatus('Video ready!', true, 'ready');
                 return;
             }
 
@@ -311,72 +355,106 @@
                 const outputFileName = 'output.mp4';
                 await ffmpeg.writeFile(inputFileName, new Uint8Array(await new Blob(recordedChunks).arrayBuffer()));
                 
-                // --- Build FFmpeg zoompan filter string ---
-                const easeDuration = 0.4; // Seconds for easing in/out
-                let filter_chains = [];
-                let last_event_end = 0;
+                const { width, height, frameRate } = videoSettings;
+                const args = ['-i', inputFileName];
+                let filterComplex = [];
+                let lastEventEnd = 0;
+                let concatStreams = '';
+                let streamCount = 0;
 
-                zoomEvents.forEach((event, i) => {
-                    const start = event.timestamp;
-                    const end = start + event.duration;
-                    const x = event.x;
-                    const y = event.y;
-                    const scale = event.scale;
+                let videoStream = '[0:v]';
 
-                    if (start < last_event_end) return; // Skip overlapping events
+                if (needsZoom) {
+                    zoomEvents.forEach((event, i) => {
+                        const start = event.timestamp;
+                        if (start < lastEventEnd) return;
 
-                    // 1. Segment before the zoom
-                    filter_chains.push(`[0:v]trim=start=${last_event_end}:end=${start},setpts=PTS-STARTPTS[v${i}a]`);
+                        if (start > lastEventEnd) {
+                            filterComplex.push(`[0:v]trim=start=${lastEventEnd}:end=${start},setpts=PTS-STARTPTS[v${streamCount}a]`);
+                            concatStreams += `[v${streamCount}a]`;
+                        }
+
+                        const end = start + event.duration;
+                        const zoompan = `zoompan=z=${event.scale}:x=${event.x}:y=${event.y}:d=${Math.ceil(event.duration * frameRate)}:s=${width}x${height}`;
+                        filterComplex.push(`[0:v]trim=start=${start}:end=${end},setpts=PTS-STARTPTS,${zoompan},setpts=PTS-STARTPTS[v${streamCount}b]`);
+                        concatStreams += `[v${streamCount}b]`;
+
+                        lastEventEnd = end;
+                        streamCount++;
+                    });
                     
-                    // 2. The zoom effect itself
-                    const zoompan_filter = `trim=${start}:${end},setpts=PTS-STARTPTS,zoompan=z='min(max(zoom,pzoom)+0.0015*${scale}, ${scale})':x='${x}-(iw/zoom/2)':y='${y}-(ih/zoom/2)':d=1:s=${screenWidth}x${screenHeight},trim=duration=${event.duration},setpts=PTS-STARTPTS[v${i}b]`;
-                    filter_chains.push(`[0:v]${zoompan_filter}`);
+                    filterComplex.push(`[0:v]trim=start=${lastEventEnd},setpts=PTS-STARTPTS[v_end]`);
+                    concatStreams += `[v_end]`;
 
-                    last_event_end = end;
-                });
-                
-                // 3. Segment after the last zoom
-                filter_chains.push(`[0:v]trim=start=${last_event_end},setpts=PTS-STARTPTS[v_end]`);
-                
-                const concat_inputs = zoomEvents.map((_, i) => `[v${i}a][v${i}b]`).join('') + '[v_end]';
-                const filter_complex = `${filter_chains.join(';')}; ${concat_inputs}concat=n=${zoomEvents.length * 2 + 1}:v=1:a=0[v]`;
+                    const n = (concatStreams.match(/\[/g) || []).length;
+                    filterComplex.push(`${concatStreams}concat=n=${n}:v=1:a=0[zoomed_v]`);
+                    videoStream = '[zoomed_v]';
+                }
 
-                await ffmpeg.exec(['-i', inputFileName, '-filter_complex', filter_complex, '-map', '[v]', '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', outputFileName]);
+                if (needsBg) {
+                    let bgInput = '';
+                    if (bgTypeSelect.value === 'solid') {
+                        bgInput = `color=c=${bgColorInput.value}:s=${width}x${height}:d=999`;
+                    } else {
+                        const c0 = gradientStartInput.value;
+                        const c1 = gradientEndInput.value;
+                        const type = gradientDirectionSelect.value === 'vertical' ? 'y' : 'x';
+                        bgInput = `gradient=c0=${c0}:c1=${c1}:s=${width}x${height}:type=${type}:d=999`;
+                    }
+                    args.push('-f', 'lavfi', '-i', bgInput);
+                    filterComplex.push(`${videoStream}scale=w=min(iw,${width-40}):h=min(ih,${height-40}),pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2[scaled_v]`);
+                    filterComplex.push(`[1:v][scaled_v]overlay=x=0:y=0:shortest=1[final_v]`);
+                    videoStream = '[final_v]';
+                }
+
+                if (filterComplex.length > 0) {
+                    args.push('-filter_complex', filterComplex.join(';'));
+                }
+                
+                args.push('-map', videoStream.includes('[') ? videoStream : `[${videoStream}]`);
+                args.push('-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', outputFileName);
+                
+                await ffmpeg.exec(...args);
                 
                 const data = await ffmpeg.readFile(outputFileName);
                 processedVideoBlob = new Blob([data.buffer], { type: 'video/mp4' });
                 
                 displayProcessedVideo(processedVideoBlob);
-                updateStatus('Video ready!', true, 'fa-check-circle');
+                updateStatus('Video ready!', true, 'ready');
 
             } catch (error) {
                 console.error("Error during FFmpeg processing:", error);
-                updateStatus('Error processing video. See console.', true, 'fa-times-circle');
+                updateStatus('Error processing video. See console.', true, 'error');
                 displayProcessedVideo(new Blob(recordedChunks, { type: 'video/webm' }));
             }
         }
         
         function displayProcessedVideo(blob) {
             processedVideoBlob = blob;
-            previewVideo.src = URL.createObjectURL(processedVideoBlob);
+            previewVideo.src = URL.createObjectURL(blob);
             previewVideo.classList.remove('hidden');
             noPreview.classList.add('hidden');
             startRecordingBtn.disabled = false;
             downloadBtn.disabled = false;
-            downloadBtn.classList.remove('opacity-50');
         }
 
         function downloadRecording() {
             if (!processedVideoBlob) return;
             const a = document.createElement('a');
             a.href = URL.createObjectURL(processedVideoBlob);
-            a.download = `recording-${Date.now()}.${processedVideoBlob.type.split('/')[1]}`;
+            a.download = `recording-${Date.now()}.${(processedVideoBlob.type.split('/')[1] || 'mp4')}`;
             a.click();
             URL.revokeObjectURL(a.href);
         }
 
         function updateZoomScaleValue() {
             zoomScaleValue.textContent = `${parseFloat(zoomScaleInput.value).toFixed(1)}x`;
+        }
+
+        async function toBlobURL(url, mimeType) {
+            const response = await fetch(url);
+            const data = await response.blob();
+            return URL.createObjectURL(data);
         }
 
         init();
