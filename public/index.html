@@ -192,7 +192,7 @@
         let stream;
         let videoSettings = {};
         let processedVideoBlob = null;
-        
+
         // --- Status Update Function ---
         function updateStatus(text, showIcon = true, iconType = 'loader') {
             statusText.textContent = text;
@@ -222,7 +222,7 @@
             handleBgTypeChange();
             await loadFFmpeg();
         }
-        
+
         async function loadFFmpeg() {
             ffmpeg = new FFmpeg();
             const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
@@ -282,9 +282,9 @@
                 zoomEvents = [];
                 processedVideoBlob = null;
                 recordingStartTime = performance.now();
-                
+
                 mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
-                
+
                 const zoomEventHandler = (e) => recordZoomEvent(e);
                 document.addEventListener('click', zoomEventHandler);
                 document.addEventListener('keydown', zoomEventHandler);
@@ -297,14 +297,14 @@
 
                 mediaRecorder.start();
                 isRecording = true;
-                
+
                 startRecordingBtn.disabled = true;
                 stopRecordingBtn.disabled = false;
                 downloadBtn.disabled = true;
                 previewVideo.classList.add('hidden');
                 noPreview.classList.remove('hidden');
                 updateStatus('Recording...', true, 'pulse');
-                
+
             } catch (err) {
                 console.error('Error starting recording:', err);
                 updateStatus('Permission denied. Please refresh and allow screen sharing.', true, 'error');
@@ -337,7 +337,7 @@
                 scale: parseFloat(zoomScaleInput.value)
             });
         }
-        
+
         async function processVideoWithFFmpeg() {
             const needsZoom = zoomEvents.length > 0;
             const needsBg = bgTypeSelect.value !== 'none';
@@ -354,7 +354,7 @@
                 const inputFileName = 'input.webm';
                 const outputFileName = 'output.mp4';
                 await ffmpeg.writeFile(inputFileName, new Uint8Array(await new Blob(recordedChunks).arrayBuffer()));
-                
+
                 const { width, height, frameRate } = videoSettings;
                 const args = ['-i', inputFileName];
                 let filterComplex = [];
@@ -382,7 +382,7 @@
                         lastEventEnd = end;
                         streamCount++;
                     });
-                    
+
                     filterComplex.push(`[0:v]trim=start=${lastEventEnd},setpts=PTS-STARTPTS[v_end]`);
                     concatStreams += `[v_end]`;
 
@@ -410,15 +410,15 @@
                 if (filterComplex.length > 0) {
                     args.push('-filter_complex', filterComplex.join(';'));
                 }
-                
+
                 args.push('-map', videoStream.includes('[') ? videoStream : `[${videoStream}]`);
                 args.push('-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', outputFileName);
-                
+
                 await ffmpeg.exec(...args);
-                
+
                 const data = await ffmpeg.readFile(outputFileName);
                 processedVideoBlob = new Blob([data.buffer], { type: 'video/mp4' });
-                
+
                 displayProcessedVideo(processedVideoBlob);
                 updateStatus('Video ready!', true, 'ready');
 
@@ -428,7 +428,7 @@
                 displayProcessedVideo(new Blob(recordedChunks, { type: 'video/webm' }));
             }
         }
-        
+
         function displayProcessedVideo(blob) {
             processedVideoBlob = blob;
             previewVideo.src = URL.createObjectURL(blob);
